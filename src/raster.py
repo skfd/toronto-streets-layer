@@ -32,6 +32,15 @@ LINE_WIDTH = 1
 REPEAT_SPACING = 500.0
 # Spatial-hash cell size for label collision lookups (px).
 GRID_CELL = 64
+# Drop a second label of the same street name placed within this many pixels of
+# an earlier one -- stops a street split into separate runs (e.g. a centreline
+# with a gap) from being labelled twice along the same stretch. Kept below
+# REPEAT_SPACING so intentional repeats along one long run are preserved.
+SAME_NAME_KEEPOUT = 0.7 * REPEAT_SPACING
+# When a run is too short to carry the name along its path, fall back to a
+# horizontal label centred on it -- but only if the line is at least this
+# fraction of the name's width, so micro-stubs don't sprout giant floating text.
+H_FALLBACK_MIN_FRAC = 0.5
 
 
 # --- path geometry ---------------------------------------------------------
@@ -83,6 +92,21 @@ def _layout_label(poly_px, cum, s_start, text, font):
         cx, cy, ang = _point_angle(poly_px, cum, s + w / 2)
         glyphs.append((ch, cx, cy, ang))
         s += w
+    return glyphs
+
+
+def _layout_horizontal(cx0, cy0, text, font):
+    """Lay out `text` horizontally, centred on (cx0, cy0). All glyphs upright.
+
+    Used as a fallback for runs too short to carry the name along their path.
+    Returns [(char, cx, cy, 0.0), ...] in world-pixel coords.
+    """
+    glyphs = []
+    x = cx0 - font.getlength(text) / 2
+    for ch in text:
+        w = font.getlength(ch)
+        glyphs.append((ch, x + w / 2, cy0, 0.0))
+        x += w
     return glyphs
 
 
@@ -200,29 +224,49 @@ def _add(grid, box):
         grid[key].append(box)
 
 
+def _near_same_name(centres, cx, cy):
+    """True if any earlier same-name label centre is within SAME_NAME_KEEPOUT."""
+    for ox, oy in centres:
+        if math.hypot(cx - ox, cy - oy) < SAME_NAME_KEEPOUT:
+            return True
+    return False
+
+
 def _place_all(projected, font):
     """Place labels for every street globally, longest streets first.
 
     `projected` is [(name, poly_px), ...]. Returns a list of laid-out labels
-    (each a glyph list). Repeated along long runs; collisions dropped.
+    (each a glyph list). Long runs carry the name along the path (repeated);
+    runs too short for on-path text fall back to a horizontal label. Collisions
+    and same-name near-duplicates are dropped.
     """
     grid = defaultdict(list)
+    placed_by_name = defaultdict(list)  # name -> [(cx, cy), ...] of placed labels
     ordered = sorted(projected, key=lambda np: -_poly_len(np[1]))
     placements = []
     for name, poly_px in ordered:
         cum = _cumulative(poly_px)
         total = cum[-1]
         tw = font.getlength(name)
-        if total < tw:
+        if total >= tw:
+            candidates = [_layout_label(poly_px, cum, s0, name, font)
+                          for s0 in _label_starts(total, tw)]
+        elif total >= tw * H_FALLBACK_MIN_FRAC:
+            mx, my, _ = _point_angle(poly_px, cum, total / 2)
+            candidates = [_layout_horizontal(mx, my, name, font)]
+        else:
             continue
-        for s0 in _label_starts(total, tw):
-            glyphs = _layout_label(poly_px, cum, s0, name, font)
+        for glyphs in candidates:
             if glyphs is None:
                 continue
             box = _label_bbox(glyphs)
+            cx, cy = (box[0] + box[2]) / 2, (box[1] + box[3]) / 2
+            if _near_same_name(placed_by_name[name], cx, cy):
+                continue
             if _collides(grid, box):
                 continue
             _add(grid, box)
+            placed_by_name[name].append((cx, cy))
             placements.append(glyphs)
     return placements
 
