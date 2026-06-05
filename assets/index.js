@@ -22,7 +22,7 @@
 
     L.tileLayer(el.dataset.rasterUrl, {
       minZoom: 14,
-      maxNativeZoom: 18,
+      maxNativeZoom: 19,
       maxZoom: 19,
     }).addTo(map);
   }

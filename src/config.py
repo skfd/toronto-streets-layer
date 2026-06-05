@@ -47,8 +47,8 @@ VECTOR_MINZOOM = 12
 VECTOR_MAXZOOM = 19
 VECTOR_LAYER_NAME = "streets"
 
-# Raster tiles. Editors overzoom z18 -> z19+.
-RASTER_ZOOMS = [14, 15, 16, 17, 18]
+# Raster tiles. Native through z19; editors overzoom z19 -> z20+.
+RASTER_ZOOMS = [14, 15, 16, 17, 18, 19]
 
 # TCL FEATURE_CODE_DESC values that are NOT streets: descriptive feature labels
 # (watercourses, rail, hydro corridors, shorelines, municipal boundary lines,
