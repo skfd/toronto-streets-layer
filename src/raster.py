@@ -387,7 +387,9 @@ def _render_zoom(streets, zoom, font, tile_filter=None):
         if tdir not in made_dirs:
             os.makedirs(tdir, exist_ok=True)
             made_dirs.add(tdir)
-        img.save(os.path.join(tdir, f"{ty}.png"), optimize=True)
+        # Palette-quantize (FASTOCTREE preserves alpha) -> ~1/3 smaller PNGs.
+        quant = img.quantize(colors=256, method=Image.Quantize.FASTOCTREE)
+        quant.save(os.path.join(tdir, f"{ty}.png"), optimize=True)
         written += 1
     print(f"Raster z{zoom}: wrote {written:,} tiles")
     return written
