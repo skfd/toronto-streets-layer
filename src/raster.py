@@ -39,11 +39,6 @@ LINE_VAL = 0.80
 REPEAT_SPACING = 500.0
 # Spatial-hash cell size for label collision lookups (px).
 GRID_CELL = 64
-# Drop a second label of the same street name placed within this many pixels of
-# an earlier one -- stops a street split into separate runs (e.g. a centreline
-# with a gap) from being labelled twice along the same stretch. Kept below
-# REPEAT_SPACING so intentional repeats along one long run are preserved.
-SAME_NAME_KEEPOUT = 0.7 * REPEAT_SPACING
 # When a run is too short to carry the name along its path, fall back to a
 # horizontal label centred on it -- but only if the line is at least this
 # fraction of the name's width, so micro-stubs don't sprout giant floating text.
@@ -253,12 +248,45 @@ def _add(grid, box):
         grid[key].append(box)
 
 
-def _near_same_name(centres, cx, cy):
-    """True if any earlier same-name label centre is within SAME_NAME_KEEPOUT."""
-    for ox, oy in centres:
-        if math.hypot(cx - ox, cy - oy) < SAME_NAME_KEEPOUT:
-            return True
-    return False
+def _sweep_starts(total, tw):
+    """Dense fallback start positions covering a run, for when ideal spots collide."""
+    span = total - tw
+    if span <= 0:
+        return [0.0]
+    step = max(tw * 0.75, 1.0)
+    out = []
+    s = 0.0
+    while s < span:
+        out.append(s)
+        s += step
+    out.append(span)
+    return out
+
+
+def _place_on_path(poly_px, cum, total, name, tw, font, grid, placements):
+    """Place up to the target number of repeated labels along one run.
+
+    Tries the ideal evenly-spaced positions first, then a denser sweep as
+    fallback, so a run whose centre is blocked still gets labelled elsewhere
+    rather than dropped entirely. Placed labels stay ~REPEAT_SPACING/2 apart.
+    """
+    ideal = _label_starts(total, tw)
+    n_target = max(1, len(ideal))
+    placed_s = []
+    for s0 in ideal + _sweep_starts(total, tw):
+        if len(placed_s) >= n_target:
+            break
+        if any(abs(s0 - ps) < REPEAT_SPACING * 0.6 for ps in placed_s):
+            continue
+        glyphs = _layout_label(poly_px, cum, s0, name, font)
+        if glyphs is None:
+            continue
+        box = _label_bbox(glyphs)
+        if _collides(grid, box):
+            continue
+        _add(grid, box)
+        placements.append(glyphs)
+        placed_s.append(s0)
 
 
 def _place_all(projected, font):
@@ -266,11 +294,10 @@ def _place_all(projected, font):
 
     `projected` is [(name, poly_px), ...]. Returns a list of laid-out labels
     (each a glyph list). Long runs carry the name along the path (repeated);
-    runs too short for on-path text fall back to a horizontal label. Collisions
-    and same-name near-duplicates are dropped.
+    runs too short for on-path text fall back to a horizontal label. Colliding
+    labels are dropped.
     """
     grid = defaultdict(list)
-    placed_by_name = defaultdict(list)  # name -> [(cx, cy), ...] of placed labels
     ordered = sorted(projected, key=lambda np: -_poly_len(np[1]))
     placements = []
     for name, poly_px in ordered:
@@ -278,25 +305,14 @@ def _place_all(projected, font):
         total = cum[-1]
         tw = font.getlength(name)
         if total >= tw:
-            candidates = [_layout_label(poly_px, cum, s0, name, font)
-                          for s0 in _label_starts(total, tw)]
+            _place_on_path(poly_px, cum, total, name, tw, font, grid, placements)
         elif total >= tw * H_FALLBACK_MIN_FRAC:
             mx, my, _ = _point_angle(poly_px, cum, total / 2)
-            candidates = [_layout_horizontal(mx, my, name, font)]
-        else:
-            continue
-        for glyphs in candidates:
-            if glyphs is None:
-                continue
+            glyphs = _layout_horizontal(mx, my, name, font)
             box = _label_bbox(glyphs)
-            cx, cy = (box[0] + box[2]) / 2, (box[1] + box[3]) / 2
-            if _near_same_name(placed_by_name[name], cx, cy):
-                continue
-            if _collides(grid, box):
-                continue
-            _add(grid, box)
-            placed_by_name[name].append((cx, cy))
-            placements.append(glyphs)
+            if not _collides(grid, box):
+                _add(grid, box)
+                placements.append(glyphs)
     return placements
 
 
