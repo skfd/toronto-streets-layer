@@ -10,6 +10,8 @@ straddles a tile seam is identical in both tiles), with collision avoidance.
 """
 
 import bisect
+import colorsys
+import hashlib
 import math
 import os
 import shutil
@@ -25,8 +27,13 @@ FONT_SIZE = 13
 TEXT_COLOR = (40, 40, 40, 255)
 HALO_COLOR = (255, 255, 255, 235)
 HALO_WIDTH = 2
-LINE_COLOR = (90, 90, 90, 150)
+LINE_COLOR = (90, 90, 90, 150)  # fallback grey (single-street debug render)
 LINE_WIDTH = 1
+# Street lines are tinted by name: a stable hash of the name picks a hue, drawn
+# muted (low saturation) so the coloured backdrop stays readable under the text.
+LINE_ALPHA = 150
+LINE_SAT = 0.35
+LINE_VAL = 0.80
 
 # Repeat a street's name roughly every this many pixels along a long run.
 REPEAT_SPACING = 500.0
@@ -41,6 +48,28 @@ SAME_NAME_KEEPOUT = 0.7 * REPEAT_SPACING
 # horizontal label centred on it -- but only if the line is at least this
 # fraction of the name's width, so micro-stubs don't sprout giant floating text.
 H_FALLBACK_MIN_FRAC = 0.5
+
+
+# --- per-name colour -------------------------------------------------------
+
+_color_cache = {}
+
+
+def _name_color(name):
+    """Stable muted RGBA tint for a street name (same name -> same colour).
+
+    Uses md5 (not the salted built-in hash) so colours are identical across
+    rebuilds. Hue spread over the wheel; low saturation keeps it a backdrop.
+    """
+    cached = _color_cache.get(name)
+    if cached is not None:
+        return cached
+    digest = hashlib.md5(name.encode("utf-8")).digest()
+    hue = digest[0] / 256.0
+    r, g, b = colorsys.hsv_to_rgb(hue, LINE_SAT, LINE_VAL)
+    color = (round(r * 255), round(g * 255), round(b * 255), LINE_ALPHA)
+    _color_cache[name] = color
+    return color
 
 
 # --- path geometry ---------------------------------------------------------
@@ -277,14 +306,14 @@ def _poly_len(poly_px):
 
 # --- tile bucketing + rendering --------------------------------------------
 
-def _bucket_segments(tiles, poly_px):
-    """Add each line segment to every tile its bounding box touches."""
+def _bucket_segments(tiles, poly_px, color):
+    """Add each line segment (with its colour) to every tile its bbox touches."""
     for a, b in zip(poly_px, poly_px[1:]):
         tx0, tx1 = int(min(a[0], b[0]) // TILE_SIZE), int(max(a[0], b[0]) // TILE_SIZE)
         ty0, ty1 = int(min(a[1], b[1]) // TILE_SIZE), int(max(a[1], b[1]) // TILE_SIZE)
         for tx in range(tx0, tx1 + 1):
             for ty in range(ty0, ty1 + 1):
-                tiles[(tx, ty)]["segs"].append((a, b))
+                tiles[(tx, ty)]["segs"].append((a, b, color))
 
 
 def _bucket_glyph(tiles, glyph, font):
@@ -303,11 +332,11 @@ def _render_tile(content, font, tx, ty):
     origin = (tx * TILE_SIZE, ty * TILE_SIZE)
     img = Image.new("RGBA", (TILE_SIZE, TILE_SIZE), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
-    for a, b in content["segs"]:
+    for a, b, color in content["segs"]:
         draw.line(
             [(a[0] - origin[0], a[1] - origin[1]),
              (b[0] - origin[0], b[1] - origin[1])],
-            fill=LINE_COLOR, width=LINE_WIDTH,
+            fill=color, width=LINE_WIDTH,
         )
     for glyph in content["glyphs"]:
         _paste_glyph(img, glyph, font, origin)
@@ -325,8 +354,8 @@ def _render_zoom(streets, zoom, font, tile_filter=None):
     print(f"Raster z{zoom}: {len(placements):,} labels placed; bucketing ...")
 
     tiles = defaultdict(lambda: {"segs": [], "glyphs": []})
-    for _name, poly_px in projected:
-        _bucket_segments(tiles, poly_px)
+    for name, poly_px in projected:
+        _bucket_segments(tiles, poly_px, _name_color(name))
     for glyphs in placements:
         for glyph in glyphs:
             _bucket_glyph(tiles, glyph, font)
@@ -378,8 +407,8 @@ def debug_render_region(zoom, west, south, east, north, out_path):
     placements = _place_all(projected, font)
 
     tiles = defaultdict(lambda: {"segs": [], "glyphs": []})
-    for _name, poly_px in projected:
-        _bucket_segments(tiles, poly_px)
+    for name, poly_px in projected:
+        _bucket_segments(tiles, poly_px, _name_color(name))
     for glyphs in placements:
         for glyph in glyphs:
             _bucket_glyph(tiles, glyph, font)
