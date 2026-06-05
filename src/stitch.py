@@ -10,8 +10,15 @@ Endpoints come from the noded TCL network and match exactly once rounded.
 """
 
 import json
+import math
 
 from src import config
+
+# Join runs of the same street whose endpoints fall within this many metres.
+# Covers both tiny coordinate-precision gaps (sub-metre) and real breaks in a
+# street's centreline (e.g. Violet Avenue's ~43 m gap), so each street becomes
+# one run carrying a single label. A short connector is drawn across the gap.
+SNAP_TOLERANCE_M = 50.0
 
 
 def read_groups(slim_path=None):
@@ -101,10 +108,54 @@ def stitch_lines(lines):
     return result
 
 
+def _gap_m(a, b):
+    """Approximate metres between two (lon, lat) points (equirectangular)."""
+    lon1, lat1 = a
+    lon2, lat2 = b
+    dx = (lon2 - lon1) * math.cos(math.radians((lat1 + lat2) / 2)) * 111320
+    dy = (lat2 - lat1) * 110540
+    return math.hypot(dx, dy)
+
+
+def join_close_runs(runs, tol_m=SNAP_TOLERANCE_M):
+    """Greedily join runs whose endpoints lie within tol_m of each other.
+
+    Unlike exact stitching this bridges a gap: the two endpoints differ, so
+    concatenating leaves a connector segment spanning the gap. Same-name runs
+    only (callers pass one street's runs), so joining never merges streets.
+    """
+    runs = [list(r) for r in runs]
+    merged = True
+    while merged and len(runs) > 1:
+        merged = False
+        for i in range(len(runs)):
+            a = runs[i]
+            for j in range(i + 1, len(runs)):
+                b = runs[j]
+                # Four endpoint pairings; orient so a's tail meets b's head.
+                if _gap_m(a[-1], b[0]) <= tol_m:
+                    runs[i] = a + b
+                elif _gap_m(a[-1], b[-1]) <= tol_m:
+                    runs[i] = a + b[::-1]
+                elif _gap_m(a[0], b[0]) <= tol_m:
+                    runs[i] = a[::-1] + b
+                elif _gap_m(a[0], b[-1]) <= tol_m:
+                    runs[i] = b + a
+                else:
+                    continue
+                runs.pop(j)
+                merged = True
+                break
+            if merged:
+                break
+    return runs
+
+
 def stitched_streets(slim_path=None):
     """Return [(name, polyline), ...] for every stitched run of every street."""
     out = []
     for g in read_groups(slim_path).values():
-        for poly in stitch_lines(g["lines"]):
+        runs = join_close_runs(stitch_lines(g["lines"]))
+        for poly in runs:
             out.append((g["name"], poly))
     return out
