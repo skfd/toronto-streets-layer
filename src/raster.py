@@ -10,7 +10,6 @@ straddles a tile seam is identical in both tiles), with collision avoidance.
 """
 
 import bisect
-import colorsys
 import hashlib
 import math
 import os
@@ -28,12 +27,27 @@ TEXT_COLOR = (40, 40, 40, 255)
 HALO_COLOR = (255, 255, 255, 235)
 HALO_WIDTH = 2
 LINE_COLOR = (90, 90, 90, 150)  # fallback grey (single-street debug render)
-LINE_WIDTH = 1
-# Street lines are tinted by name: a stable hash of the name picks a hue, drawn
-# muted (low saturation) so the coloured backdrop stays readable under the text.
-LINE_ALPHA = 150
-LINE_SAT = 0.35
-LINE_VAL = 0.80
+LINE_WIDTH = 3
+# Street lines are tinted by name: a stable hash of the name picks one of a
+# fixed 12-colour, perceptually-spaced and mostly colour-vision-deficiency-safe
+# palette, so adjacent streets stay distinguishable. Drawn semi-transparent; the
+# white text halo keeps labels legible over any tint.
+LINE_ALPHA = 200
+# Paul Tol's CVD-safe "bright" set plus five "muted" hues -> 12 distinct tints.
+LINE_PALETTE = (
+    (0x44, 0x77, 0xAA),  # blue
+    (0x66, 0xCC, 0xEE),  # cyan
+    (0x44, 0xAA, 0x99),  # teal
+    (0x22, 0x88, 0x33),  # green
+    (0x99, 0x99, 0x33),  # olive
+    (0xCC, 0xBB, 0x44),  # yellow
+    (0xDD, 0xCC, 0x77),  # sand
+    (0xEE, 0x66, 0x77),  # red
+    (0xAA, 0x33, 0x77),  # purple
+    (0x88, 0x22, 0x55),  # wine
+    (0x33, 0x22, 0x88),  # indigo
+    (0xBB, 0xBB, 0xBB),  # grey
+)
 
 # Repeat a street's name roughly every this many pixels along a long run.
 REPEAT_SPACING = 500.0
@@ -51,18 +65,17 @@ _color_cache = {}
 
 
 def _name_color(name):
-    """Stable muted RGBA tint for a street name (same name -> same colour).
+    """Stable CVD-safe RGBA tint for a street name (same name -> same colour).
 
     Uses md5 (not the salted built-in hash) so colours are identical across
-    rebuilds. Hue spread over the wheel; low saturation keeps it a backdrop.
+    rebuilds. The digest selects one of LINE_PALETTE's 12 tints.
     """
     cached = _color_cache.get(name)
     if cached is not None:
         return cached
     digest = hashlib.md5(name.encode("utf-8")).digest()
-    hue = digest[0] / 256.0
-    r, g, b = colorsys.hsv_to_rgb(hue, LINE_SAT, LINE_VAL)
-    color = (round(r * 255), round(g * 255), round(b * 255), LINE_ALPHA)
+    r, g, b = LINE_PALETTE[digest[0] % len(LINE_PALETTE)]
+    color = (r, g, b, LINE_ALPHA)
     _color_cache[name] = color
     return color
 
