@@ -19,6 +19,7 @@ def cmd_download(args):
     from src.download import download
     status, path = download(force=args.force)
     print(f"{status}: {path}")
+    return status
 
 
 def cmd_slim(args):
@@ -64,7 +65,15 @@ def cmd_build(args):
 
 
 def cmd_update(args):
-    cmd_build(args)
+    # The full rebuild is multi-hour, so skip it entirely when the TCL source
+    # has not changed since the last download.
+    if cmd_download(args) == "SKIPPED" and not args.force:
+        print("Source unchanged - nothing to rebuild.")
+        return
+    cmd_slim(args)
+    cmd_vector(args)
+    cmd_raster(args)
+    cmd_site(args)
     cmd_publish(args)
 
 
@@ -89,7 +98,7 @@ COMMANDS = {
     "site": (cmd_site, "Render the GitHub Pages landing page"),
     "publish": (cmd_publish, "Force-push the site to the gh-pages branch"),
     "build": (cmd_build, "download + slim + vector + raster + site"),
-    "update": (cmd_update, "build + publish (daily scheduled-task entry point)"),
+    "update": (cmd_update, "build + publish (weekly scheduled-task entry point)"),
 }
 
 
