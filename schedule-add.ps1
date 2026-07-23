@@ -6,9 +6,17 @@ if (-not (Test-Path "$projectDir\logs")) {
     New-Item -ItemType Directory -Path "$projectDir\logs" | Out-Null
 }
 
+# A git process killed mid-write (a torn-down container with Code/ mounted is the
+# usual culprit) leaves a zero-byte *.lock behind, and publish then fails every run
+# until someone clears it by hand -- that cost the sibling address layers six days
+# of updates in July 2026. Sweep first, best-effort: joined with & so a hiccup here
+# can never block the build.
+$lockCheck = Join-Path (Split-Path $projectDir -Parent) "check-git-locks.ps1"
+if (-not (Test-Path $lockCheck)) { Write-Warning "Lock sweeper not found: $lockCheck" }
+
 $action = New-ScheduledTaskAction `
     -Execute "cmd.exe" `
-    -Argument "/c cd /d `"$projectDir`" && python run.py update >> `"$logFile`" 2>&1"
+    -Argument "/c cd /d `"$projectDir`" && (powershell -NoProfile -ExecutionPolicy Bypass -File `"$lockCheck`" -Clear & python run.py update) >> `"$logFile`" 2>&1"
 
 # Weekly, not daily: the TCL centreline changes rarely and a full rebuild is
 # multi-hour ('update' now exits early when the source is unchanged anyway).
