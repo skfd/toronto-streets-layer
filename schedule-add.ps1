@@ -23,7 +23,13 @@ $action = New-ScheduledTaskAction `
 # 09:00 keeps it clear of the sibling kk-TorontoAddressLayer task (14:00) so the
 # two tippecanoe/WSL builds do not contend for resources.
 $trigger  = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday -At "09:00"
-$settings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Hours 3) -StartWhenAvailable
+# Restart on failure. 'update' exits 75 as soon as it sees no usable link
+# instead of blocking on one (the ExecutionTimeLimit would kill a long wait
+# anyway), so three tries half an hour apart turn a dead link at 09:00 into a
+# run at 10:30 rather than a seven-day gap -- which is what a dead resolver
+# cost this task on 2026-07-27.
+$settings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Hours 3) -StartWhenAvailable `
+    -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 30)
 
 Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Settings $settings -Force
 

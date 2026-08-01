@@ -89,11 +89,31 @@ Run as Administrator:
 It is set for 15:30 &mdash; after the sibling address-layer task &mdash; so the
 two tippecanoe/WSL builds do not contend.
 
+### The link gate
+
+Both network steps &mdash; the dataset download and the `gh-pages` push &mdash;
+run behind `addressvault.net`, the same offline/metered gate the address vault
+pulls behind. A dead link is not a build failure: `run.py` exits **75**
+(`EX_TEMPFAIL`), nothing is written, and the task's restart-on-failure retries
+three times half an hour apart rather than leaving a seven-day gap. It does not
+wait the link out, since the task carries a hard `ExecutionTimeLimit` that would
+kill a long wait anyway.
+
+A download dropped mid-body resumes with a Range request instead of starting
+over, and a push that cannot resolve `github.com` is retried without rebuilding
+&mdash; the finished tiles stay on disk, so `python run.py publish` can complete
+the run later. Before this, a dead resolver on 2026-07-27 threw away a whole
+150k-tile build at the push.
+
+Re-run `schedule-add.ps1` to apply the restart settings to an already registered
+task.
+
 ## Tests
 
 ```
 python tests\test_tilemath.py
 python tests\test_stitch.py
+pytest                       # the above, plus the download / publish tests
 ```
 
 ## Licence / attribution
