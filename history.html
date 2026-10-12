@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Toronto Street Names &mdash; Changes Per City Release</title>
+<link rel="stylesheet" href="index.css">
+<style>
+  main { max-width: 900px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 1.1rem; font-size: .9rem; margin: 1rem 0 .25rem; }
+  .legend span { display: inline-flex; align-items: center; gap: .4rem; }
+  .legend i { display: inline-block; width: 18px; height: 0; border-top: 2px solid; border-radius: 2px; }
+  .chart { position: relative; overflow-x: auto; }
+  .chart svg { display: block; width: 100%; min-width: 640px; height: auto; font-size: 12px; }
+  .chart .grid { stroke: var(--border); stroke-width: 1; }
+  .chart .axis { fill: var(--muted); }
+  .chart .series { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .chart .pt { stroke: #fff; stroke-width: 2; }
+  .chart .end-label { fill: var(--ink); font-weight: 600; }
+  .chart .crosshair { stroke: var(--muted); stroke-width: 1; pointer-events: none; }
+  .chart .hit { fill: transparent; cursor: crosshair; }
+  .tip {
+    position: absolute; top: 0; left: 0; pointer-events: none; display: none;
+    background: #fff; border: 1px solid var(--border); border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.12); padding: .45rem .65rem;
+    font-size: .85rem; line-height: 1.45; white-space: nowrap;
+  }
+  .tip .d { color: var(--muted); }
+  .tip i { display: inline-block; width: 12px; border-top: 2px solid; margin-right: .4rem; vertical-align: middle; }
+  .tip strong { display: inline-block; min-width: 3em; }
+  .empty { color: var(--muted); padding: 2rem 0; }
+  table.runs { font-size: .9rem; }
+  table.runs th { width: auto; }
+  table.runs td:first-child { white-space: nowrap; }
+  table.runs td.n { text-align: right; font-variant-numeric: tabular-nums; }
+  table.runs td.what { font-size: .85rem; }
+</style>
+<script defer src="history.js"></script>
+</head>
+<body>
+<main>
+
+<h1>Changes per City release</h1>
+<p class="lead">
+  What each City of Toronto centreline release this layer was built from
+  <strong>added</strong>, <strong>removed</strong> or <strong>renamed</strong>,
+  street by street &mdash; one point per release, so a mapper can see which
+  names may need updating in OpenStreetMap.
+</p>
+<p class="meta">13 releases since 2026-06-03 &middot; page built 2026-10-11 &middot;
+  <a href="./">the layer</a> &middot; <a href="history.jsonl">data (JSONL)</a></p>
+
+<div class="legend" id="legend"></div>
+<div class="chart" id="chart"><div class="tip" id="tip"></div></div>
+
+<p class="meta" style="margin-top:.75rem">
+  A <em>street</em> is one TCL linear name (<code>LINEAR_NAME_ID</code>) among
+  the named segments this layer keeps; each change is counted against the
+  previous release on record, so a gap between releases folds several of the
+  City's updates into one point. Dates are the City's release dates, not build
+  dates. Releases marked <em>archive</em> were measured afterwards from the
+  file that build downloaded. Per-class segment counts are in the JSONL.
+</p>
+
+<h2>Every release</h2>
+<table class="runs">
+  <thead>
+    <tr><th>Release</th><th>Segments</th><th>Streets</th><th>Names</th>
+        <th>Added</th><th>Removed</th><th>Renamed</th><th>What changed</th><th>Recorded</th></tr>
+  </thead>
+  <tbody>
+<tr><td>2026-10-09</td><td class="n">61,736</td><td class="n">14,470</td><td class="n">14,374</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="what"></td><td>live</td></tr>
+<tr><td>2026-10-02</td><td class="n">61,736</td><td class="n">14,470</td><td class="n">14,374</td><td class="n">1</td><td class="n">0</td><td class="n">0</td><td class="what">+ Scarborough Busway</td><td>archive</td></tr>
+<tr><td>2026-09-25</td><td class="n">61,725</td><td class="n">14,469</td><td class="n">14,373</td><td class="n">7</td><td class="n">0</td><td class="n">0</td><td class="what">+ Conacher Park Trail<br>+ Donalda Park Trail<br>+ Glen Edyth Drive Parkette Trail<br>+ Opera Place Trail<br>+ Pemberton Parkette Trail<br>+ Pleasantview Park Trail<br>+ Warrender Park Trail</td><td>archive</td></tr>
+<tr><td>2026-09-18</td><td class="n">61,707</td><td class="n">14,462</td><td class="n">14,366</td><td class="n">4</td><td class="n">0</td><td class="n">0</td><td class="what">+ Ballyconnor Park Trail<br>+ Canon Jackson Park Trail<br>+ Dr. Lillian McGregor Park Trail<br>+ Geco Park Trail</td><td>archive</td></tr>
+<tr><td>2026-09-11</td><td class="n">61,682</td><td class="n">14,458</td><td class="n">14,362</td><td class="n">5</td><td class="n">3</td><td class="n">0</td><td class="what">+ Aren Levy Lane<br>+ Ramsden Park Lane<br>+ Sister Gwen Smith Lane<br>+ Sugar Maple Way<br>+ Valerie Mah Lane<br>&minus; Ln W Rushbrooke N Eastern<br>&minus; Ln W Vaughan N Ellsworth<br>&minus; Ramsden Park Road</td><td>archive</td></tr>
+<tr><td>2026-09-03</td><td class="n">61,683</td><td class="n">14,456</td><td class="n">14,360</td><td class="n">1</td><td class="n">0</td><td class="n">0</td><td class="what">+ Rosethorn Park Trail</td><td>archive</td></tr>
+<tr><td>2026-08-28</td><td class="n">61,681</td><td class="n">14,455</td><td class="n">14,359</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="what"></td><td>archive</td></tr>
+<tr><td>2026-08-21</td><td class="n">61,681</td><td class="n">14,455</td><td class="n">14,359</td><td class="n">6</td><td class="n">2</td><td class="n">0</td><td class="what">+ De Sa Lane<br>+ Glamorgan Park Trail<br>+ Havendale Park Trail<br>+ Palmira Lane<br>+ Sunday Mews<br>+ Woloch Family Lane<br>&minus; Ln N Robinson St E Palmerston<br>&minus; Ln W Yonge N Macpherson</td><td>archive</td></tr>
+<tr><td>2026-08-14</td><td class="n">61,705</td><td class="n">14,451</td><td class="n">14,355</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="what"></td><td>archive</td></tr>
+<tr><td>2026-08-07</td><td class="n">61,706</td><td class="n">14,451</td><td class="n">14,355</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="what"></td><td>archive</td></tr>
+<tr><td>2026-07-31</td><td class="n">61,711</td><td class="n">14,451</td><td class="n">14,355</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="what"></td><td>archive</td></tr>
+<tr><td>2026-07-24</td><td class="n">61,719</td><td class="n">14,451</td><td class="n">14,355</td><td class="n">10</td><td class="n">1</td><td class="n">0</td><td class="what">+ Beecroft Linear Park Trail<br>+ Caswell Park Trail<br>+ Charlton Park Trail<br>+ Donora Park Trail<br>+ Glengarry Park Trail<br>+ Kennedy Parkette Trail<br>+ Memorial Gardens Park Trail<br>+ Robert Leek Memorial Park Trail<br>+ Scarborough Village Park Trail<br>+ The Meadoway<br>&minus; St. James Town West Park Trail</td><td>archive</td></tr>
+<tr><td>2026-06-03</td><td class="n">61,748</td><td class="n">14,442</td><td class="n">14,346</td><td class="n">&ndash;</td><td class="n">&ndash;</td><td class="n">&ndash;</td><td class="what"></td><td>archive</td></tr>
+  </tbody>
+</table>
+
+<p class="meta" style="margin-top:2rem">
+  Built by <a href="https://github.com/skfd/toronto-streets-layer">skfd/toronto-streets-layer</a>.
+  Street data &copy; City of Toronto, published under the
+  <a href="https://open.toronto.ca/open-data-licence/">Open Government Licence &ndash; Toronto</a>.
+</p>
+
+<script type="application/json" id="history-data">[{"date": "2026-06-03", "source": "archive", "features": 61748, "streets": 14442, "names": 14346, "classes": {"Access Road": 57, "Busway": 18, "Collector": 6372, "Collector Ramp": 16, "Expressway": 1187, "Expressway Ramp": 1133, "Laneway": 4146, "Local": 24883, "Major Arterial": 5866, "Major Arterial Ramp": 171, "Minor Arterial": 3557, "Minor Arterial Ramp": 1, "Other": 2103, "Other Ramp": 6, "Pending": 648, "Trail": 11584}, "added": null, "removed": null, "renamed": null}, {"date": "2026-07-24", "source": "archive", "features": 61719, "streets": 14451, "names": 14355, "classes": {"Access Road": 57, "Busway": 18, "Collector": 6362, "Collector Ramp": 16, "Expressway": 1189, "Expressway Ramp": 1134, "Laneway": 4144, "Local": 24850, "Major Arterial": 5846, "Major Arterial Ramp": 171, "Minor Arterial": 3551, "Minor Arterial Ramp": 1, "Other": 2102, "Other Ramp": 6, "Pending": 647, "Trail": 11625}, "added": 10, "removed": 1, "renamed": 0, "changes": {"added": ["Beecroft Linear Park Trail", "Caswell Park Trail", "Charlton Park Trail", "Donora Park Trail", "Glengarry Park Trail", "Kennedy Parkette Trail", "Memorial Gardens Park Trail", "Robert Leek Memorial Park Trail", "Scarborough Village Park Trail", "The Meadoway"], "removed": ["St. James Town West Park Trail"], "renamed": []}}, {"date": "2026-07-31", "source": "archive", "features": 61711, "streets": 14451, "names": 14355, "classes": {"Access Road": 57, "Busway": 18, "Collector": 6361, "Collector Ramp": 16, "Expressway": 1189, "Expressway Ramp": 1134, "Laneway": 4146, "Local": 24848, "Major Arterial": 5842, "Major Arterial Ramp": 171, "Minor Arterial": 3550, "Minor Arterial Ramp": 1, "Other": 2102, "Other Ramp": 6, "Pending": 646, "Trail": 11624}, "added": 0, "removed": 0, "renamed": 0, "changes": {"added": [], "removed": [], "renamed": []}}, {"date": "2026-08-07", "source": "archive", "features": 61706, "streets": 14451, "names": 14355, "classes": {"Access Road": 57, "Busway": 18, "Collector": 6360, "Collector Ramp": 16, "Expressway": 1189, "Expressway Ramp": 1134, "Laneway": 4146, "Local": 24846, "Major Arterial": 5841, "Major Arterial Ramp": 171, "Minor Arterial": 3550, "Minor Arterial Ramp": 1, "Other": 2102, "Other Ramp": 6, "Pending": 646, "Trail": 11623}, "added": 0, "removed": 0, "renamed": 0, "changes": {"added": [], "removed": [], "renamed": []}}, {"date": "2026-08-14", "source": "archive", "features": 61705, "streets": 14451, "names": 14355, "classes": {"Access Road": 57, "Busway": 18, "Collector": 6359, "Collector Ramp": 16, "Expressway": 1189, "Expressway Ramp": 1134, "Laneway": 4146, "Local": 24848, "Major Arterial": 5840, "Major Arterial Ramp": 171, "Minor Arterial": 3550, "Minor Arterial Ramp": 1, "Other": 2102, "Other Ramp": 6, "Pending": 646, "Trail": 11622}, "added": 0, "removed": 0, "renamed": 0, "changes": {"added": [], "removed": [], "renamed": []}}, {"date": "2026-08-21", "source": "archive", "features": 61681, "streets": 14455, "names": 14359, "classes": {"Access Road": 57, "Busway": 18, "Collector": 6357, "Collector Ramp": 16, "Expressway": 1189, "Expressway Ramp": 1134, "Laneway": 4146, "Local": 24844, "Major Arterial": 5837, "Major Arterial Ramp": 171, "Minor Arterial": 3550, "Minor Arterial Ramp": 1, "Other": 2102, "Other Ramp": 6, "Pending": 646, "Trail": 11607}, "added": 6, "removed": 2, "renamed": 0, "changes": {"added": ["De Sa Lane", "Glamorgan Park Trail", "Havendale Park Trail", "Palmira Lane", "Sunday Mews", "Woloch Family Lane"], "removed": ["Ln N Robinson St E Palmerston", "Ln W Yonge N Macpherson"], "renamed": []}}, {"date": "2026-08-28", "source": "archive", "features": 61681, "streets": 14455, "names": 14359, "classes": {"Access Road": 57, "Busway": 18, "Collector": 6357, "Collector Ramp": 16, "Expressway": 1189, "Expressway Ramp": 1134, "Laneway": 4146, "Local": 24844, "Major Arterial": 5837, "Major Arterial Ramp": 171, "Minor Arterial": 3550, "Minor Arterial Ramp": 1, "Other": 2102, "Other Ramp": 6, "Pending": 646, "Trail": 11607}, "added": 0, "removed": 0, "renamed": 0, "changes": {"added": [], "removed": [], "renamed": []}}, {"date": "2026-09-03", "source": "archive", "features": 61683, "streets": 14456, "names": 14360, "classes": {"Access Road": 57, "Busway": 18, "Collector": 6357, "Collector Ramp": 16, "Expressway": 1189, "Expressway Ramp": 1134, "Laneway": 4145, "Local": 24844, "Major Arterial": 5837, "Major Arterial Ramp": 171, "Minor Arterial": 3550, "Minor Arterial Ramp": 1, "Other": 2102, "Other Ramp": 6, "Pending": 646, "Trail": 11610}, "added": 1, "removed": 0, "renamed": 0, "changes": {"added": ["Rosethorn Park Trail"], "removed": [], "renamed": []}}, {"date": "2026-09-11", "source": "archive", "features": 61682, "streets": 14458, "names": 14362, "classes": {"Access Road": 57, "Busway": 18, "Collector": 6357, "Collector Ramp": 16, "Expressway": 1189, "Expressway Ramp": 1134, "Laneway": 4146, "Local": 24844, "Major Arterial": 5837, "Major Arterial Ramp": 171, "Minor Arterial": 3550, "Minor Arterial Ramp": 1, "Other": 2099, "Other Ramp": 6, "Pending": 649, "Trail": 11608}, "added": 5, "removed": 3, "renamed": 0, "changes": {"added": ["Aren Levy Lane", "Ramsden Park Lane", "Sister Gwen Smith Lane", "Sugar Maple Way", "Valerie Mah Lane"], "removed": ["Ln W Rushbrooke N Eastern", "Ln W Vaughan N Ellsworth", "Ramsden Park Road"], "renamed": []}}, {"date": "2026-09-18", "source": "archive", "features": 61707, "streets": 14462, "names": 14366, "classes": {"Access Road": 57, "Busway": 18, "Collector": 6359, "Collector Ramp": 16, "Expressway": 1189, "Expressway Ramp": 1134, "Laneway": 4146, "Local": 24840, "Major Arterial": 5837, "Major Arterial Ramp": 171, "Minor Arterial": 3550, "Minor Arterial Ramp": 1, "Other": 2099, "Other Ramp": 6, "Pending": 648, "Trail": 11636}, "added": 4, "removed": 0, "renamed": 0, "changes": {"added": ["Ballyconnor Park Trail", "Canon Jackson Park Trail", "Dr. Lillian McGregor Park Trail", "Geco Park Trail"], "removed": [], "renamed": []}}, {"date": "2026-09-25", "source": "archive", "features": 61725, "streets": 14469, "names": 14373, "classes": {"Access Road": 57, "Busway": 18, "Collector": 6358, "Collector Ramp": 16, "Expressway": 1189, "Expressway Ramp": 1134, "Laneway": 4146, "Local": 24840, "Major Arterial": 5836, "Major Arterial Ramp": 171, "Minor Arterial": 3548, "Minor Arterial Ramp": 1, "Other": 2099, "Other Ramp": 6, "Pending": 648, "Trail": 11658}, "added": 7, "removed": 0, "renamed": 0, "changes": {"added": ["Conacher Park Trail", "Donalda Park Trail", "Glen Edyth Drive Parkette Trail", "Opera Place Trail", "Pemberton Parkette Trail", "Pleasantview Park Trail", "Warrender Park Trail"], "removed": [], "renamed": []}}, {"date": "2026-10-02", "source": "archive", "features": 61736, "streets": 14470, "names": 14374, "classes": {"Access Road": 57, "Busway": 27, "Collector": 6358, "Collector Ramp": 16, "Expressway": 1189, "Expressway Ramp": 1134, "Laneway": 4146, "Local": 24839, "Major Arterial": 5836, "Major Arterial Ramp": 174, "Minor Arterial": 3547, "Minor Arterial Ramp": 1, "Other": 2099, "Other Ramp": 6, "Pending": 649, "Trail": 11658}, "added": 1, "removed": 0, "renamed": 0, "changes": {"added": ["Scarborough Busway"], "removed": [], "renamed": []}}, {"date": "2026-10-09", "source": "live", "features": 61736, "streets": 14470, "names": 14374, "classes": {"Access Road": 57, "Busway": 27, "Collector": 6358, "Collector Ramp": 16, "Expressway": 1189, "Expressway Ramp": 1134, "Laneway": 4146, "Local": 24839, "Major Arterial": 5836, "Major Arterial Ramp": 174, "Minor Arterial": 3547, "Minor Arterial Ramp": 1, "Other": 2099, "Other Ramp": 6, "Pending": 649, "Trail": 11658}, "added": 0, "removed": 0, "renamed": 0, "changes": {"added": [], "removed": [], "renamed": []}}]</script>
+</main>
+</body>
+</html>
