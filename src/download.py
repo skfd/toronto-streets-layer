@@ -5,10 +5,10 @@ a HEAD request compares Last-Modified + Content-Length against a small JSON
 sidecar, and the file is only re-fetched when those change.
 
 Every request is gated on a usable link first (``addressvault.net``, the same
-gate the address vault pulls behind). The weekly trigger is what makes that
-worth doing: a run lost to a dead link is not retried until next Monday, and on
-2026-07-27 both this task and the parks sibling died exactly that way -- an
-unhandled getaddrinfo traceback. A link that dies mid-body now resumes instead
+gate the address vault pulls behind). The monthly trigger is what makes that
+worth doing: a run lost to a dead link is not retried until next month (it was
+next Monday when the task ran weekly), and on 2026-07-27 both this task and the
+parks sibling died exactly that way -- an unhandled getaddrinfo traceback. A link that dies mid-body now resumes instead
 of costing the whole download.
 """
 

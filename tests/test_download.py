@@ -96,7 +96,7 @@ def offline_gate(monkeypatch):
 
 
 def test_a_dead_link_stops_before_any_request(data_dir, monkeypatch):
-    # The whole point of the gate: on a weekly trigger, finding out now costs a
+    # The whole point of the gate: on a monthly trigger, finding out now costs a
     # second, and finding out at the end of a 600 s read costs the slot.
     def boom(*a, **k):
         raise AssertionError("made a request on a dead link")
