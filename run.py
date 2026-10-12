@@ -36,6 +36,19 @@ def cmd_slim(args):
     slim(_latest_geojson())
 
 
+def cmd_history(args):
+    _banner("History")
+    from src.history import record
+    record(_latest_geojson())
+
+
+def cmd_backfill(args):
+    _banner("Backfill release history")
+    from src.history import backfill
+    added = backfill()
+    print(f"Added {added} row(s) to {config.HISTORY_PATH}")
+
+
 def cmd_vector(args):
     _banner("Vector tiles")
     from src.vector import build_vector
@@ -67,6 +80,7 @@ def cmd_publish(args):
 def cmd_build(args):
     cmd_download(args)
     cmd_slim(args)
+    cmd_history(args)
     cmd_vector(args)
     cmd_raster(args)
     cmd_site(args)
@@ -79,6 +93,8 @@ def cmd_update(args):
         print("Source unchanged - nothing to rebuild.")
         return
     cmd_slim(args)
+    # After slim, so a release that fails slim's sanity check is not recorded.
+    cmd_history(args)
     cmd_vector(args)
     cmd_raster(args)
     cmd_site(args)
@@ -101,12 +117,14 @@ def _latest_geojson():
 COMMANDS = {
     "download": (cmd_download, "Download the latest TCL centreline GeoJSON"),
     "slim": (cmd_slim, "Filter + convert the GeoJSON into slim GeoJSONL"),
+    "history": (cmd_history, "Record the current release's statistics"),
+    "backfill": (cmd_backfill, "Record every archived release in data/ not on record"),
     "vector": (cmd_vector, "Build vector (MVT) tiles via WSL tippecanoe"),
     "raster": (cmd_raster, "Build text-on-path labelled raster (PNG) tiles"),
     "site": (cmd_site, "Render the GitHub Pages landing page"),
     "publish": (cmd_publish, "Force-push the site to the gh-pages branch"),
-    "build": (cmd_build, "download + slim + vector + raster + site"),
-    "update": (cmd_update, "build + publish (weekly scheduled-task entry point)"),
+    "build": (cmd_build, "download + slim + history + vector + raster + site"),
+    "update": (cmd_update, "build + publish (monthly scheduled-task entry point)"),
 }
 
 
