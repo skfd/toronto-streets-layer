@@ -68,3 +68,19 @@ EXCLUDE_FEATURE_CODES = frozenset({
 NAME_KEY = "LINEAR_NAME_FULL_LEGAL"   # expanded name, e.g. "Daisy Avenue"
 CLASS_KEY = "FEATURE_CODE_DESC"       # road class, e.g. "Local"
 NAME_ID_KEY = "LINEAR_NAME_ID"        # groups segments of one street
+
+# --- Update history (trend page) ---
+# One JSON line per source date: what that TCL release holds (features, names,
+# per-class counts) and which streets it added, removed or renamed against the
+# previous release on record. Lives in data/ with the rest of the build state;
+# the tiles are rebuilt and force-pushed each time, this file only grows, and
+# its published copy re-seeds a checkout that has none.
+HISTORY_PATH = os.path.join(DATA_DIR, "history.jsonl")
+HISTORY_URL = f"{PAGES_URL}/history.jsonl"
+# Per-release name_id -> name maps, the input to the added/removed/renamed diff.
+# Small (~0.5 MB each, one per release) and local only: a wiped data/ loses the
+# diff for the next release, never the recorded rows.
+NAMES_DIR = os.path.join(DATA_DIR, "names")
+# How many changed names a row lists per kind; the counts are never capped.
+HISTORY_LIST_CAP = 25
+USER_AGENT = f"toronto-streets-layer (+https://github.com/{GITHUB_REPO})"

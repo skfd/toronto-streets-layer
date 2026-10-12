@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Toronto Street Names &mdash; Changes Per City Release</title>
+<link rel="stylesheet" href="index.css">
+<style>
+  main { max-width: 900px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 1.1rem; font-size: .9rem; margin: 1rem 0 .25rem; }
+  .legend span { display: inline-flex; align-items: center; gap: .4rem; }
+  .legend i { display: inline-block; width: 18px; height: 0; border-top: 2px solid; border-radius: 2px; }
+  .chart { position: relative; overflow-x: auto; }
+  .chart svg { display: block; width: 100%; min-width: 640px; height: auto; font-size: 12px; }
+  .chart .grid { stroke: var(--border); stroke-width: 1; }
+  .chart .axis { fill: var(--muted); }
+  .chart .series { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .chart .pt { stroke: #fff; stroke-width: 2; }
+  .chart .end-label { fill: var(--ink); font-weight: 600; }
+  .chart .crosshair { stroke: var(--muted); stroke-width: 1; pointer-events: none; }
+  .chart .hit { fill: transparent; cursor: crosshair; }
+  .tip {
+    position: absolute; top: 0; left: 0; pointer-events: none; display: none;
+    background: #fff; border: 1px solid var(--border); border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.12); padding: .45rem .65rem;
+    font-size: .85rem; line-height: 1.45; white-space: nowrap;
+  }
+  .tip .d { color: var(--muted); }
+  .tip i { display: inline-block; width: 12px; border-top: 2px solid; margin-right: .4rem; vertical-align: middle; }
+  .tip strong { display: inline-block; min-width: 3em; }
+  .empty { color: var(--muted); padding: 2rem 0; }
+  table.runs { font-size: .9rem; }
+  table.runs th { width: auto; }
+  table.runs td.n { text-align: right; font-variant-numeric: tabular-nums; }
+  table.runs td.what { font-size: .85rem; }
+</style>
+<script defer src="history.js"></script>
+</head>
+<body>
+<main>
+
+<h1>Changes per City release</h1>
+<p class="lead">
+  What each City of Toronto centreline release this layer was built from
+  <strong>added</strong>, <strong>removed</strong> or <strong>renamed</strong>,
+  street by street &mdash; one point per release, so a mapper can see which
+  names may need updating in OpenStreetMap.
+</p>
+<p class="meta">{{RUN_COUNT}} releases since {{FIRST_DATE}} &middot; page built {{BUILD_DATE}} &middot;
+  <a href="./">the layer</a> &middot; <a href="history.jsonl">data (JSONL)</a></p>
+
+<div class="legend" id="legend"></div>
+<div class="chart" id="chart"><div class="tip" id="tip"></div></div>
+
+<p class="meta" style="margin-top:.75rem">
+  A <em>street</em> is one TCL linear name (<code>LINEAR_NAME_ID</code>) among
+  the named segments this layer keeps; each change is counted against the
+  previous release on record, so a gap between releases folds several of the
+  City's updates into one point. Dates are the City's release dates, not build
+  dates. Releases marked <em>archive</em> were measured afterwards from the
+  file that build downloaded. Per-class segment counts are in the JSONL.
+</p>
+
+<h2>Every release</h2>
+<table class="runs">
+  <thead>
+    <tr><th>Release</th><th>Segments</th><th>Streets</th><th>Names</th>
+        <th>Added</th><th>Removed</th><th>Renamed</th><th>What changed</th><th>Recorded</th></tr>
+  </thead>
+  <tbody>
+{{HISTORY_ROWS}}
+  </tbody>
+</table>
+
+<p class="meta" style="margin-top:2rem">
+  Built by <a href="https://github.com/{{GITHUB_REPO}}">{{GITHUB_REPO}}</a>.
+  Street data &copy; City of Toronto, published under the
+  <a href="{{LICENSE_URL}}">Open Government Licence &ndash; Toronto</a>.
+</p>
+
+<script type="application/json" id="history-data">{{HISTORY_JSON}}</script>
+</main>
+</body>
+</html>
