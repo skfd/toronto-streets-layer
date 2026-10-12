@@ -129,8 +129,12 @@ branch (root).
 
 The task runs `python run.py update` from the project folder, after sweeping
 stale git locks with `..\check-git-locks.ps1 -Clear`, and appends everything to
-`logs\scheduler.log`. `update` exits early when the City has not republished
-since the last download. The City republishes the centreline weekly, but a
+`logs\scheduler.log`. `update` exits early only when the downloaded release is
+the one already live: `data/.last-published.json` is written after a successful
+push, never before, so a run that fails anywhere after the download is rebuilt
+by the next retry instead of being skipped as "unchanged". Any failure exits
+nonzero after an `ERROR <date>: run.py <command> failed: ...` line in the log
+(75 still means no usable link). The City republishes the centreline weekly, but a
 release changes a handful of streets at most, so a monthly build keeps the
 layer current; each one adds a row to the release history. 09:00 keeps it clear
 of the sibling `kk-TorontoAddressLayer` task (14:00), so the two

@@ -1,8 +1,11 @@
 """CLI entry point for the Toronto street-names tile layer build."""
 
 import argparse
+import json
 import os
 import sys
+import traceback
+from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -15,6 +18,9 @@ from src import config  # noqa: E402
 # the addressvault CLI, so the scheduled task's restart-on-failure retries it
 # and a wrapper can tell "no network" apart from a broken build.
 EXIT_LINK_UNAVAILABLE = 75
+# Anything else that stops a run. Nothing is marked published, so a retry
+# rebuilds the same release.
+EXIT_FAILED = 1
 
 
 def _banner(text):
@@ -27,7 +33,7 @@ def cmd_download(args):
     from src.download import download
     status, path = download(force=args.force)
     print(f"{status}: {path}")
-    return status
+    return status, path
 
 
 def cmd_slim(args):
@@ -75,6 +81,10 @@ def cmd_publish(args):
     _banner("Publish")
     from src.publish import publish
     publish()
+    # Only now is the release that build/site holds actually live.
+    built = _read_marker(config.LAST_BUILT_PATH)
+    if built:
+        _write_marker(config.LAST_PUBLISHED_PATH, built)
 
 
 def cmd_build(args):
@@ -84,21 +94,44 @@ def cmd_build(args):
     cmd_vector(args)
     cmd_raster(args)
     cmd_site(args)
+    _write_marker(config.LAST_BUILT_PATH, os.path.basename(_latest_geojson()))
 
 
 def cmd_update(args):
-    # The full rebuild is multi-hour, so skip it entirely when the TCL source
-    # has not changed since the last download.
-    if cmd_download(args) == "SKIPPED" and not args.force:
-        print("Source unchanged - nothing to rebuild.")
+    # The full rebuild is multi-hour, so skip it when the current TCL release is
+    # already live. "Unchanged" means published, not merely downloaded: a build
+    # that died after the download leaves the release on disk, and the task's
+    # restart-on-failure retry must rebuild it rather than call it done.
+    status, path = cmd_download(args)
+    release = os.path.basename(path)
+    if not args.force and _read_marker(config.LAST_PUBLISHED_PATH) == release:
+        print(f"Source unchanged - {release} is already published.")
         return
+    if status == "SKIPPED":
+        print(f"{release} was downloaded but never published - rebuilding.")
     cmd_slim(args)
     # After slim, so a release that fails slim's sanity check is not recorded.
     cmd_history(args)
     cmd_vector(args)
     cmd_raster(args)
     cmd_site(args)
+    _write_marker(config.LAST_BUILT_PATH, release)
     cmd_publish(args)
+
+
+def _read_marker(path):
+    """The release filename a marker file names, or None."""
+    if not os.path.isfile(path):
+        return None
+    with open(path, encoding="utf-8") as f:
+        return json.load(f).get("release")
+
+
+def _write_marker(path, release):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump({"release": release,
+                   "at": datetime.now().isoformat(timespec="seconds")}, f)
 
 
 def _latest_geojson():
@@ -154,6 +187,16 @@ def main():
         print(f"\nSkipped: {e}")
         print("Nothing was fetched or published; the task will retry.")
         sys.exit(EXIT_LINK_UNAVAILABLE)
+    except Exception as e:
+        # One greppable line in scheduler.log, then the traceback. Nonzero, so
+        # the task's restart-on-failure retries -- and the retry rebuilds,
+        # since nothing is marked published until the push succeeds.
+        sys.stdout.flush()
+        traceback.print_exc()
+        sys.stderr.flush()
+        print(f"ERROR {datetime.now():%Y-%m-%d %H:%M}: run.py {args.command} "
+              f"failed: {type(e).__name__}: {e}", flush=True)
+        sys.exit(EXIT_FAILED)
 
 
 if __name__ == "__main__":

@@ -16,6 +16,10 @@ MBTILES_PATH = os.path.join(BUILD_DIR, "streets.mbtiles")
 SLIM_PATH = os.path.join(DATA_DIR, "streets-slim.geojsonl")
 COUNT_PATH = os.path.join(DATA_DIR, "streets.count")
 LAST_DOWNLOAD_PATH = os.path.join(DATA_DIR, ".last-download.json")
+# Which release build/site was last fully built from, and which release is live
+# on gh-pages. update skips only when the downloaded release is the published one.
+LAST_BUILT_PATH = os.path.join(DATA_DIR, ".last-built.json")
+LAST_PUBLISHED_PATH = os.path.join(DATA_DIR, ".last-published.json")
 
 VECTOR_TILE_DIR = os.path.join(SITE_DIR, "tiles", "vector")
 RASTER_TILE_DIR = os.path.join(SITE_DIR, "tiles", "raster")
