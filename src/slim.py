@@ -33,31 +33,11 @@ def slim(src_path):
     skipped = 0
     with open(src_path, "rb") as src, \
             open(config.SLIM_PATH, "w", encoding="utf-8") as out:
-        for feature in ijson.items(src, "features.item"):
-            props_in = feature.get("properties") or {}
-            if props_in.get(config.CLASS_KEY) in config.EXCLUDE_FEATURE_CODES:
+        for feature in kept_features(src):
+            if feature is None:
                 skipped += 1
                 continue
-
-            geom = _line_geometry(feature.get("geometry") or {})
-            name = _clean(props_in.get(config.NAME_KEY))
-            if geom is None or not name:
-                skipped += 1
-                continue
-
-            props_out = {"name": name}
-            klass = _clean(props_in.get(config.CLASS_KEY))
-            if klass:
-                props_out["class"] = klass
-            name_id = props_in.get(config.NAME_ID_KEY)
-            if name_id is not None:
-                props_out["name_id"] = name_id
-
-            out.write(json.dumps({
-                "type": "Feature",
-                "geometry": geom,
-                "properties": props_out,
-            }) + "\n")
+            out.write(json.dumps(feature) + "\n")
             count += 1
             if count % 10_000 == 0:
                 print(f"  {count:,} features ...")
@@ -72,6 +52,37 @@ def slim(src_path):
             f"{MIN_EXPECTED:,}-{MAX_EXPECTED:,} -- aborting."
         )
     return config.SLIM_PATH
+
+
+def kept_features(src):
+    """Yield each source feature as its slim Feature dict, or None if dropped.
+
+    The one definition of what the layer keeps: the slim file is written from
+    it, and the update history (src/history.py) counts from it, so the two can
+    never disagree about what a "feature" is. ``src`` is the raw TCL GeoJSON
+    opened in binary mode; it is streamed, never loaded whole.
+    """
+    for feature in ijson.items(src, "features.item"):
+        props_in = feature.get("properties") or {}
+        if props_in.get(config.CLASS_KEY) in config.EXCLUDE_FEATURE_CODES:
+            yield None
+            continue
+
+        geom = _line_geometry(feature.get("geometry") or {})
+        name = _clean(props_in.get(config.NAME_KEY))
+        if geom is None or not name:
+            yield None
+            continue
+
+        props_out = {"name": name}
+        klass = _clean(props_in.get(config.CLASS_KEY))
+        if klass:
+            props_out["class"] = klass
+        name_id = props_in.get(config.NAME_ID_KEY)
+        if name_id is not None:
+            props_out["name_id"] = name_id
+
+        yield {"type": "Feature", "geometry": geom, "properties": props_out}
 
 
 def _clean(val):
