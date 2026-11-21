@@ -39,8 +39,8 @@ LICENSE_URL = "https://open.toronto.ca/open-data-licence/"
 ATTRIBUTION = "(c) City of Toronto, Open Government Licence - Toronto"
 
 # GitHub Pages target. Update both if the repo/account differs.
-GITHUB_REPO = "skfd/toronto-streets-layer"
-PAGES_URL = "https://skfd.github.io/toronto-streets-layer"
+GITHUB_REPO = "toronto-maps/toronto-streets-layer"
+PAGES_URL = "https://toronto-maps.github.io/toronto-streets-layer"
 
 # WSL distro that has tippecanoe installed (see the sibling addresses layer).
 WSL_DISTRO = "Ubuntu"

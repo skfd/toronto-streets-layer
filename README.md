@@ -5,10 +5,10 @@ dataset into map-tile layers that OpenStreetMap mappers can add to the **iD**
 and **JOSM** editors as a reference overlay of street **centrelines labelled
 with their full names**.
 
-**Live layer and how to add it: https://skfd.github.io/toronto-streets-layer/**
+**Live layer and how to add it: https://toronto-maps.github.io/toronto-streets-layer/**
 
 It is a sibling of the read-only comparison report
-[toronto-streets-osm](https://github.com/skfd/toronto-streets-osm), but where
+[toronto-streets-osm](https://github.com/toronto-maps/toronto-streets-osm), but where
 that project *reports* TCL-vs-OSM differences, this one produces an overlay you
 *map against*. It is standalone: the City publishes the data in WGS84, so this
 project downloads it directly.
@@ -21,7 +21,7 @@ project downloads it directly.
   centrelines; a readable backdrop for JOSM.
 - A **landing page** with copy-paste "add this layer" instructions for both
   editors.
-- A **release history** page, [`history.html`](https://skfd.github.io/toronto-streets-layer/history.html),
+- A **release history** page, [`history.html`](https://toronto-maps.github.io/toronto-streets-layer/history.html),
   charting the streets each City release added, removed or renamed (see
   [Release history](#release-history)).
 
@@ -69,10 +69,10 @@ Build output lands in `build/site/`; that directory is what gets published.
 ## Release history
 
 This layer does not compare with OSM &mdash; the sibling
-[toronto-streets-osm](https://github.com/skfd/toronto-streets-osm) does &mdash; so
+[toronto-streets-osm](https://github.com/toronto-maps/toronto-streets-osm) does &mdash; so
 what each update records is what it can honestly measure about the City data
 itself. Every build appends one line to `data/history.jsonl`, and the site step
-charts it at [`/history.html`](https://skfd.github.io/toronto-streets-layer/history.html)
+charts it at [`/history.html`](https://toronto-maps.github.io/toronto-streets-layer/history.html)
 with the rows published beside it as `history.jsonl`. A row holds:
 
 | field | meaning |
